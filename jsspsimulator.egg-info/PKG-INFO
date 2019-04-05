@@ -1,0 +1,17 @@
+Metadata-Version: 1.1
+Name: jsspsimulator
+Version: 0.1
+Summary: A native python JSSP simulator
+Home-page: https://github.com/Junyoungpark/JSSPsimulator
+Author: Junyoung Park, Jaehyeong Chun
+Author-email: Junyoungpark@kaist.ac.kr
+License: UNKNOWN
+Description: UNKNOWN
+Keywords: JSSP,JSSP simulator
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.2
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
