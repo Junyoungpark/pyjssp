@@ -1,10 +1,10 @@
 import numpy as np
 from collections import OrderedDict
 
-from JSSPsimulator.operationHelpers import Operation
-from JSSPsimulator.configs import (PROCESSING_NODE_SIG,
-                                   DONE_NODE_SIG,
-                                   DELAYED_NODE_SIG)
+from pyjssp.operationHelpers import Operation
+from pyjssp.configs import (PROCESSING_NODE_SIG,
+                            DONE_NODE_SIG,
+                            DELAYED_NODE_SIG)
 
 DEBUG = False
 DELAY = True

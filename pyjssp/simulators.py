@@ -1,9 +1,9 @@
 import numpy as np
 
-from JSSPsimulator.jobShopSamplers import jssp_sampling
-from JSSPsimulator.operationHelpers import JobManager
-from JSSPsimulator.machineHelpers import MachineManager
-from JSSPsimulator.configs import (N_SEP, SEP, NEW)
+from pyjssp.jobShopSamplers import jssp_sampling
+from pyjssp.operationHelpers import JobManager
+from pyjssp.machineHelpers import MachineManager
+from pyjssp.configs import (N_SEP, SEP, NEW)
 
 
 class Simulator:

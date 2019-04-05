@@ -7,15 +7,15 @@ from collections import OrderedDict
 
 from plotly.offline import plot
 
-from JSSPsimulator.configs import (NOT_START_NODE_SIG,
-                                   PROCESSING_NODE_SIG,
-                                   DONE_NODE_SIG,
-                                   DELAYED_NODE_SIG,
-                                   DUMMY_NODE_SIG,
-                                   CONJUNCTIVE_TYPE,
-                                   DISJUNCTIVE_TYPE,
-                                   FORWARD,
-                                   BACKWARD)
+from pyjssp.configs import (NOT_START_NODE_SIG,
+                            PROCESSING_NODE_SIG,
+                            DONE_NODE_SIG,
+                            DELAYED_NODE_SIG,
+                            DUMMY_NODE_SIG,
+                            CONJUNCTIVE_TYPE,
+                            DISJUNCTIVE_TYPE,
+                            FORWARD,
+                            BACKWARD)
 
 
 def get_edge_color_map(g, edge_type_color_dict=None):
