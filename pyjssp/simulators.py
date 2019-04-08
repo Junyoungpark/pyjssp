@@ -1,7 +1,11 @@
+from collections import OrderedDict
+
 import numpy as np
+import matplotlib.pyplot as plt
+import networkx as nx
 
 from pyjssp.jobShopSamplers import jssp_sampling
-from pyjssp.operationHelpers import JobManager
+from pyjssp.operationHelpers import JobManager, get_edge_color_map, get_node_color_map
 from pyjssp.machineHelpers import MachineManager
 from pyjssp.configs import (N_SEP, SEP, NEW)
 
@@ -13,7 +17,8 @@ class Simulator:
                  name=None,
                  machine_matrix=None,
                  processing_time_matrix=None,
-                 embedding_dim=16):
+                 embedding_dim=16,
+                 use_surrogate_index=True):
 
         if machine_matrix is None or processing_time_matrix is None:
             ms, prts = self._sample_jssp_graph(num_machines, num_jobs)
@@ -33,13 +38,15 @@ class Simulator:
         self.embedding_dim = embedding_dim
         self.num_jobs = self.processing_time_matrix.shape[0]
         self.num_steps = self.processing_time_matrix.shape[1]
+        self.use_surrogate_index = use_surrogate_index
         self.reset_simulator()
         # simulation procedure : global_time +=1 -> do_processing -> transit
 
     def reset_simulator(self):
         self.job_manager = JobManager(self.machine_matrix,
                                       self.processing_time_matrix,
-                                      embedding_dim=self.embedding_dim)
+                                      embedding_dim=self.embedding_dim,
+                                      use_surrogate_index=self.use_surrogate_index)
         self.machine_manager = MachineManager(self.machine_matrix)
         self.global_time = 0  # -1 matters a lot
 
@@ -80,9 +87,55 @@ class Simulator:
 
         return self.job_manager.observe(), r, done
 
-    def plot_graph(self):
-        # A simple wrapper for JobManager's plot_graph function
-        self.job_manager.plot_graph()
+    def plot_graph(self, draw=True,
+                   node_type_color_dict=None,
+                   edge_type_color_dict=None,
+                   half_width=None,
+                   half_height=None,
+                   **kwargs):
+        
+        g = self.job_manager.observe()
+        node_colors = get_node_color_map(g, node_type_color_dict)
+        edge_colors = get_edge_color_map(g, edge_type_color_dict)
+        
+        if half_width is None:
+            half_width = 30
+        if half_height is None:
+            half_height = 10
+        
+        num_horizontals = self.num_steps + 1
+        num_verticals = self.num_jobs + 1 
+        
+        def xidx2coord(x):
+            return np.linspace(-half_width, half_width, num_horizontals)[x]
+
+        def yidx2coord(y):
+            return np.linspace(-half_height, half_height, num_verticals)[y]
+        
+        pos_dict = OrderedDict()
+        for n in g.nodes:
+            if self.use_surrogate_index:
+                y, x = self.job_manager.sur_index_dict[n]
+                pos_dict[n] = np.array((xidx2coord(x), yidx2coord(y)))
+            else:
+                pos_dict[n] = np.array((xidx2coord(n[1]), yidx2coord(n[0])))
+        
+        if kwargs is None:
+            kwargs['figsize'] = (10, 5)
+            kwargs['dpi'] = 300
+        
+        fig = plt.figure(**kwargs)
+        ax = fig.add_subplot(1, 1, 1)
+
+        nx.draw(g, pos_dict,
+                node_color=node_colors,
+                edge_color=edge_colors,
+                with_labels=True,
+                ax=ax)
+        if draw:
+            plt.show()
+        else:
+            return fig, ax
 
     def draw_gantt_chart(self, path, benchmark_name, max_x):
         # Draw a gantt chart

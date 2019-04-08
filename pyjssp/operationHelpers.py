@@ -75,7 +75,8 @@ class JobManager:
     def __init__(self,
                  machine_matrix,
                  processing_time_matrix,
-                 embedding_dim=16):
+                 embedding_dim=16,
+                 use_surrogate_index=True):
 
         machine_matrix = machine_matrix.astype(int)
         processing_time_matrix = processing_time_matrix.astype(float)
@@ -99,6 +100,18 @@ class JobManager:
                     else:
                         ops.append(Operation.get_op(job_id2, step_id2))
                 op1.disjunctive_ops = ops
+        
+        self.use_surrogate_index = use_surrogate_index
+        
+        if self.use_surrogate_index:
+            # Constructing surrogate indices:
+            num_ops = 0
+            self.sur_index_dict = dict()
+            for job_id, job in self.jobs.items():
+                for op in job.ops:
+                    op.sur_id = num_ops
+                    self.sur_index_dict[num_ops] = op._id
+                    num_ops += 1
 
     def __call__(self, index):
         return self.jobs[index]
@@ -110,7 +123,7 @@ class JobManager:
         """
         :return: Current time stamp job-shop graph
         """
-
+        
         g = nx.OrderedDiGraph()
         for job_id, job in self.jobs.items():
             for op in job.ops:
@@ -250,7 +263,7 @@ class DummyOperation:
                  embedding_dim):
         self.job_id = job_id
         self.step_id = step_id
-        self.id = (job_id, step_id)
+        self._id = (job_id, step_id)
         self.machine_id = 'NA'
         self.processing_time = 0
         self.embedding_dim = embedding_dim
@@ -259,7 +272,14 @@ class DummyOperation:
         self._x = {'type': self.type}
         self.node_status = DUMMY_NODE_SIG
         self.remaining_time = 0
-
+    
+    @property
+    def id(self):
+        if hasattr(self, 'sur_id'):
+            _id = self.sur_id
+        else:
+            _id = self._id
+        return _id
 
 class StartOperation(DummyOperation):
 
@@ -327,7 +347,7 @@ class Operation:
         self.job_id = job_id
         self.step_id = step_id
         self.job = job
-        self.id = (job_id, step_id)
+        self._id = (job_id, step_id)
         self.machine_id = machine_id
         self.node_status = NOT_START_NODE_SIG
         self.complete_ratio = complete_ratio
@@ -357,6 +377,14 @@ class Operation:
         else:
             prev_done = False
         return prev_done or prev_none
+    
+    @property
+    def id(self):
+        if hasattr(self, 'sur_id'):
+            _id = self.sur_id
+        else:
+            _id = self._id
+        return _id
 
     @property
     def disjunctive_ops(self):
