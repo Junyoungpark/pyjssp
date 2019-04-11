@@ -1,3 +1,4 @@
+import random
 from collections import OrderedDict
 
 import numpy as np
@@ -18,7 +19,8 @@ class Simulator:
                  machine_matrix=None,
                  processing_time_matrix=None,
                  embedding_dim=16,
-                 use_surrogate_index=True):
+                 use_surrogate_index=True,
+                 delay=True):
 
         if machine_matrix is None or processing_time_matrix is None:
             ms, prts = self._sample_jssp_graph(num_machines, num_jobs)
@@ -39,6 +41,7 @@ class Simulator:
         self.num_jobs = self.processing_time_matrix.shape[0]
         self.num_steps = self.processing_time_matrix.shape[1]
         self.use_surrogate_index = use_surrogate_index
+        self.delay = delay
         self.reset_simulator()
         # simulation procedure : global_time +=1 -> do_processing -> transit
 
@@ -47,19 +50,32 @@ class Simulator:
                                       self.processing_time_matrix,
                                       embedding_dim=self.embedding_dim,
                                       use_surrogate_index=self.use_surrogate_index)
-        self.machine_manager = MachineManager(self.machine_matrix)
+        self.machine_manager = MachineManager(self.machine_matrix, self.delay)
         self.global_time = 0  # -1 matters a lot
 
-    def transit(self, action):
-        """
-        :param action: (2 dim tuple); (job_id, step_id)
-        """
-        job_id, step_id = action
-        operation = self.job_manager[job_id][step_id]
-        machine_id = operation.machine_id
-        machine = self.machine_manager[machine_id]
-        action = operation
-        machine.transit(self.global_time, action)
+    def transit(self, action=None):
+        if action is None:
+            # Perform random action
+            machine = random.choice(self.machine_manager.get_available_machines())
+            op_id = random.choice(machine.doable_ops_id)
+            job_id, step_id = self.job_manager.sur_index_dict[op_id]
+            operation = self.job_manager[job_id][step_id]
+            action = operation
+            machine.transit(self.global_time, action)
+        else:
+            if self.use_surrogate_index:
+                if action in self.job_manager.sur_index_dict.keys():
+                    job_id, step_id = self.job_manager.sur_index_dict[action]
+                else:
+                    raise RuntimeError("Input action is not valid")
+            else:
+                job_id, step_id = action
+
+            operation = self.job_manager[job_id][step_id]
+            machine_id = operation.machine_id
+            machine = self.machine_manager[machine_id]
+            action = operation
+            machine.transit(self.global_time, action)
 
     def get_available_machines(self):
         return self.machine_manager.get_available_machines()

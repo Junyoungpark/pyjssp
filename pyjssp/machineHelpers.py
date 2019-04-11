@@ -12,7 +12,8 @@ DELAY = True
 
 class MachineManager:
     def __init__(self,
-                 machine_matrix):
+                 machine_matrix,
+                 delay=True):
 
         machine_matrix = machine_matrix.astype(int)
 
@@ -26,7 +27,7 @@ class MachineManager:
             possible_ops = []
             for job_id, step_id in zip(job_ids, step_ids):
                 possible_ops.append(Operation.get_op(job_id, step_id))
-            self.machines[m_id] = Machine(m_id, possible_ops)
+            self.machines[m_id] = Machine(m_id, possible_ops, delay)
 
     def do_processing(self, t):
         for _, machine in self.machines.items():
@@ -72,7 +73,7 @@ class MachineManager:
 
 
 class Machine:
-    def __init__(self, machine_id, possible_ops):
+    def __init__(self, machine_id, possible_ops, delay):
         self.machine_id = machine_id
         self.possible_ops = possible_ops
         self.remain_ops = possible_ops
@@ -83,12 +84,13 @@ class Machine:
         self.done_ops = []
         self.num_done_ops = 0
         self.cost = 0
+        self.delay = delay
 
     def __str__(self):
         return "Machine {}".format(self.machine_id)
 
     def available(self):
-        future_work_exist_cond = self.doable_ops(delay=DELAY)
+        future_work_exist_cond = self.doable_ops(delay=self.delay)
         currently_not_processing_cond = self.current_op is None
         not_wait_for_delayed_cond = not self.wait_for_delayed()
         ret = future_work_exist_cond and currently_not_processing_cond and not_wait_for_delayed_cond
@@ -129,7 +131,7 @@ class Machine:
     @property
     def doable_ops_id(self):
         doable_ops_id = []
-        doable_ops = self.doable_ops(delay=DELAY)
+        doable_ops = self.doable_ops(delay=self.delay)
         for op in doable_ops:
             doable_ops_id.append(op.id)
 
