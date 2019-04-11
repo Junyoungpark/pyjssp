@@ -76,7 +76,6 @@ class Simulator:
             machine = self.machine_manager[machine_id]
             action = operation
             machine.transit(self.global_time, action)
-            dd
 
     def get_available_machines(self):
         return self.machine_manager.get_available_machines()
