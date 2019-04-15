@@ -1,4 +1,4 @@
-matplotlib
-networkx
 numpy
+matplotlib
 plotly
+networkx
