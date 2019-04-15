@@ -82,6 +82,23 @@ class Simulator:
     def get_available_machines(self, shuffle_machine=True):
         return self.machine_manager.get_available_machines(shuffle_machine)
 
+    def get_doable_ops(self, machine_id=None):
+        if machine_id is None:
+            doable_dict = {}
+            if self.get_available_machines():
+                for m in self.get_available_machines():
+                    _id = m.machine_id
+                    _ops = m.doable_ops_id
+                    doable_dict[_id] = _ops
+            ret = doable_dict
+        else:
+            available_machines = [m.machine_id for m in self.get_available_machines()]
+            if machine_id in available_machines:
+                ret = self.machine_manager[machine_id].doable_ops_id
+            else:
+                raise RuntimeWarning("Access to the not available machine {}. Return is None".format(machine_id))
+        return ret
+
     def observe(self, reward='makespan'):
         # A simple wrapper for JobManager's observe function
         # and return current time step reward r
