@@ -82,11 +82,11 @@ class Simulator:
     def get_available_machines(self, shuffle_machine=True):
         return self.machine_manager.get_available_machines(shuffle_machine)
 
-    def get_doable_ops(self, machine_id=None):
+    def get_doable_ops_in_dict(self, machine_id=None, shuffle_machine=True):
         if machine_id is None:
             doable_dict = {}
             if self.get_available_machines():
-                for m in self.get_available_machines():
+                for m in self.get_available_machines(shuffle_machine):
                     _id = m.machine_id
                     _ops = m.doable_ops_id
                     doable_dict[_id] = _ops
@@ -97,6 +97,20 @@ class Simulator:
                 ret = self.machine_manager[machine_id].doable_ops_id
             else:
                 raise RuntimeWarning("Access to the not available machine {}. Return is None".format(machine_id))
+        return ret
+
+    def get_doable_ops_in_list(self, machine_id=None, shuffle_machine=True):
+        doable_dict = self.get_doable_ops_in_dict(machine_id, shuffle_machine)
+        do_ops = []
+        for _, v in doable_dict.items():
+            do_ops += v
+        return do_ops
+
+    def get_doable_ops(self, machine_id=None, return_list=False, shuffle_machine=True):
+        if return_list:
+            ret = self.get_doable_ops_in_list(machine_id, shuffle_machine)
+        else:
+            ret = self.get_doable_ops_in_dict(machine_id, shuffle_machine)
         return ret
 
     def observe(self, reward='makespan'):
