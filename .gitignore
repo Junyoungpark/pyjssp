@@ -1,0 +1,20 @@
+# python caches
+*.pyc
+__pycache__/
+
+# json objects
+*.json
+
+# pycharm related
+.idea/
+
+# jupyter_related
+.ipynb_checkpoints/
+*.ipynb
+
+# vs code related
+.vscode/
+
+# pipenv related
+Pipfile.lock
+
