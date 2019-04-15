@@ -174,7 +174,7 @@ class Simulator:
         # return jssp_sampling(m, n, 1, 5)
 
     @classmethod
-    def from_path(cls, jssp_path):
+    def from_path(cls, jssp_path, **kwargs):
         with open(jssp_path) as f:
             ms = []  # machines
             prts = []  # processing times
@@ -196,10 +196,11 @@ class Simulator:
                    num_jobs=num_job,
                    name=name,
                    machine_matrix=ms,
-                   processing_time_matrix=prts)
+                   processing_time_matrix=prts,
+                   **kwargs)
 
     @classmethod
-    def from_TA_path(cls, pt_path, m_path):
+    def from_TA_path(cls, pt_path, m_path, **kwargs):
         with open(pt_path) as f1:
             prts = []
             for l in f1:
@@ -227,5 +228,6 @@ class Simulator:
                    num_jobs=num_job,
                    name=name,
                    machine_matrix=ms,
-                   processing_time_matrix=prts)
+                   processing_time_matrix=prts,
+                   **kwargs)
 
