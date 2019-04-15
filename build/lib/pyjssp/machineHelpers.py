@@ -1,19 +1,17 @@
-import numpy as np
+import random
 from collections import OrderedDict
-
+import numpy as np
 from pyjssp.operationHelpers import Operation
 from pyjssp.configs import (PROCESSING_NODE_SIG,
                             DONE_NODE_SIG,
                             DELAYED_NODE_SIG)
 
-DEBUG = False
-DELAY = True
-
 
 class MachineManager:
     def __init__(self,
                  machine_matrix,
-                 delay=True):
+                 delay=True,
+                 verbose=False):
 
         machine_matrix = machine_matrix.astype(int)
 
@@ -27,7 +25,7 @@ class MachineManager:
             possible_ops = []
             for job_id, step_id in zip(job_ids, step_ids):
                 possible_ops.append(Operation.get_op(job_id, step_id))
-            self.machines[m_id] = Machine(m_id, possible_ops, delay)
+            self.machines[m_id] = Machine(m_id, possible_ops, delay, verbose)
 
     def do_processing(self, t):
         for _, machine in self.machines.items():
@@ -39,11 +37,14 @@ class MachineManager:
     def __getitem__(self, index):
         return self.machines[index]
 
-    def get_available_machines(self):
+    def get_available_machines(self, shuffle_machine=True):
         m_list = []
         for _, m in self.machines.items():
             if m.available():
                 m_list.append(m)
+
+        if shuffle_machine:
+            m_list = random.sample(m_list, len(m_list))
 
         return m_list
 
@@ -73,7 +74,7 @@ class MachineManager:
 
 
 class Machine:
-    def __init__(self, machine_id, possible_ops, delay):
+    def __init__(self, machine_id, possible_ops, delay, verbose):
         self.machine_id = machine_id
         self.possible_ops = possible_ops
         self.remain_ops = possible_ops
@@ -85,6 +86,7 @@ class Machine:
         self.num_done_ops = 0
         self.cost = 0
         self.delay = delay
+        self.verbose = verbose
 
     def __str__(self):
         return "Machine {}".format(self.machine_id)
@@ -177,12 +179,12 @@ class Machine:
         # Essential condition for checking whether input is delayed
         # if delayed then, flush dealed_op attr
         if op == self.delayed_op:
-            if DEBUG:
+            if self.verbose:
                 print("[DELAYED OP LOADED] / MACHINE {} / {} / at {}".format(self.machine_id, op, t))
             self.delayed_op = None
 
         else:
-            if DEBUG:
+            if self.verbose:
                 print("[LOAD] / Machine {} / {} on at {}".format(self.machine_id, op, t))
 
         # Update operation's attributes
@@ -198,7 +200,7 @@ class Machine:
         self.cost = 0
 
     def unload(self, t):
-        if DEBUG:
+        if self.verbose:
             print("[UNLOAD] / Machine {} / Op {} / t = {}".format(self.machine_id, self.current_op, t))
         self.current_op.node_status = DONE_NODE_SIG
         self.current_op.end_time = t
@@ -216,7 +218,7 @@ class Machine:
             if self.current_op.remaining_time <= 0:
                 if self.current_op.remaining_time < 0:
                     raise RuntimeWarning("Negative remaining time observed")
-                if DEBUG:
+                if self.verbose:
                     print("[OP DONE] : / Machine  {} / Op {}/ t = {} ".format(self.machine_id, self.current_op, t))
                 self.unload(t)
 
@@ -229,7 +231,7 @@ class Machine:
                 self.delayed_op = a
                 self.delayed_op.remaining_time = a.processing_time + a.prev_op.remaining_time
                 self.current_op = None  # MACHINE is now waiting for delayed ops
-                if DEBUG:
+                if self.verbose:
                     print("[DELAYED OP CHOSEN] : / Machine  {} / Op {}/ t = {} ".format(self.machine_id, self.delayed_op, t))
         else:
             raise RuntimeError("Access to not available machine")

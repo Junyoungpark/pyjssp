@@ -20,7 +20,8 @@ class Simulator:
                  processing_time_matrix=None,
                  embedding_dim=16,
                  use_surrogate_index=True,
-                 delay=True):
+                 delay=False,
+                 verbose=False):
 
         if machine_matrix is None or processing_time_matrix is None:
             ms, prts = self._sample_jssp_graph(num_machines, num_jobs)
@@ -42,6 +43,7 @@ class Simulator:
         self.num_steps = self.processing_time_matrix.shape[1]
         self.use_surrogate_index = use_surrogate_index
         self.delay = delay
+        self.verbose = verbose
         self.reset_simulator()
         # simulation procedure : global_time +=1 -> do_processing -> transit
 
@@ -50,7 +52,7 @@ class Simulator:
                                       self.processing_time_matrix,
                                       embedding_dim=self.embedding_dim,
                                       use_surrogate_index=self.use_surrogate_index)
-        self.machine_manager = MachineManager(self.machine_matrix, self.delay)
+        self.machine_manager = MachineManager(self.machine_matrix, self.delay, self.verbose)
         self.global_time = 0  # -1 matters a lot
 
     def transit(self, action=None):
@@ -77,8 +79,8 @@ class Simulator:
             action = operation
             machine.transit(self.global_time, action)
 
-    def get_available_machines(self):
-        return self.machine_manager.get_available_machines()
+    def get_available_machines(self, shuffle_machine=True):
+        return self.machine_manager.get_available_machines(shuffle_machine)
 
     def observe(self, reward='makespan'):
         # A simple wrapper for JobManager's observe function
