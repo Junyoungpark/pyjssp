@@ -85,6 +85,7 @@ class JobManager:
 
         # Constructing conjunctive edges
         for job_i, (m, pr_t) in enumerate(zip(machine_matrix, processing_time_matrix)):
+            m = m + 1  # To make machine index starts from 1
             self.jobs[job_i] = Job(job_i, m, pr_t, embedding_dim)
 
         # Constructing disjunctive edges
