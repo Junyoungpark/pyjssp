@@ -25,6 +25,7 @@ class MachineManager:
             possible_ops = []
             for job_id, step_id in zip(job_ids, step_ids):
                 possible_ops.append(Operation.get_op(job_id, step_id))
+            m_id += 1  # To make machine index starts from 1
             self.machines[m_id] = Machine(m_id, possible_ops, delay, verbose)
 
     def do_processing(self, t):
