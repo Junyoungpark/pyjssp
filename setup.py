@@ -2,13 +2,13 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyjssp',
-    version='0.2.7',
+    version='0.2.8',
     description='A native python Job Shop Scheduling Problem (JSSP) simulator',
     author='Junyoung Park, Jaehyeong Chun',
     author_email='Junyoungpark@kaist.ac.kr',
     url='https://github.com/Junyoungpark/JSSPsimulator',
     install_requires=['numpy', 'matplotlib', 'plotly', 'networkx'],
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests']),
     keywords=['jssp', 'jssp simulator'],
     python_rquires='>=3',
     package_data={

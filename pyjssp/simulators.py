@@ -113,7 +113,7 @@ class Simulator:
             ret = self.get_doable_ops_in_dict(machine_id, shuffle_machine)
         return ret
 
-    def observe(self, reward='makespan'):
+    def observe(self, reward='makespan', return_doable=True):
         # A simple wrapper for JobManager's observe function
         # and return current time step reward r
         # check all jobs are done or not, then return done = True or False
@@ -134,7 +134,17 @@ class Simulator:
             t_cost = self.machine_manager.cal_total_cost()
             r = -t_cost
 
-        return self.job_manager.observe(), r, done
+        g = self.job_manager.observe()
+
+        if return_doable:
+            do_ops_list = self.get_doable_ops(return_list=True)
+            for n in g.nodes:
+                if n in do_ops_list:
+                    g.nodes[n]['doable'] = True
+                else:
+                    g.nodes[n]['doable'] = False
+
+        return g, r, done
 
     def plot_graph(self, draw=True,
                    node_type_color_dict=None,

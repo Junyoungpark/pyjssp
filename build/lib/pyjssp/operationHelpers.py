@@ -281,6 +281,7 @@ class DummyOperation:
             _id = self._id
         return _id
 
+
 class StartOperation(DummyOperation):
 
     def __init__(self, job_id, embedding_dim):
