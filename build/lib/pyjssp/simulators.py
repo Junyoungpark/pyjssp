@@ -137,12 +137,17 @@ class Simulator:
         g = self.job_manager.observe()
 
         if return_doable:
-            do_ops_list = self.get_doable_ops(return_list=True)
-            for n in g.nodes:
-                if n in do_ops_list:
-                    g.nodes[n]['doable'] = True
-                else:
-                    g.nodes[n]['doable'] = False
+            if self.use_surrogate_index:
+                do_ops_list = self.get_doable_ops(return_list=True)
+                for n in g.nodes:
+                    if n in do_ops_list:
+                        job_id, op_id = self.job_manager.sur_index_dict[n]
+                        m_id = self.job_manager[job_id][op_id].machine_id
+                        g.nodes[n]['doable'] = True
+                        g.nodes[n]['machine'] = m_id
+                    else:
+                        g.nodes[n]['doable'] = False
+                        g.nodes[n]['machine'] = 0
 
         return g, r, done
 
