@@ -48,7 +48,16 @@ class MachineManager:
             m_list = random.sample(m_list, len(m_list))
 
         return m_list
+    
+    # get idle machines' list
+    def get_idle_machines(self):
+        m_list = []
+        for _, m in self.machines.items():
+            if m.current_op is None and not m.work_done():
+                m_list.append(m)
+        return m_list
 
+    
     # calculate the length of queues for all machines
     def cal_total_cost(self):
         c = 0
@@ -220,7 +229,7 @@ class Machine:
                 if self.current_op.remaining_time <= 0:
                     if self.current_op.remaining_time < 0:
                         raise RuntimeWarning("Negative remaining time observed")
-                    if DEBUG:
+                    if self.verbose:
                         print("[OP DONE] : / Machine  {} / Op {}/ t = {} ".format(self.machine_id, self.current_op, t))
                     self.unload(t)
             # to compute idle_time reward, we need to count delayed_time
