@@ -354,6 +354,7 @@ class Operation:
         self.node_status = NOT_START_NODE_SIG
         self.complete_ratio = complete_ratio
         self.prev_op = prev_op
+        self.delayed_time = 0
         self.processing_time = int(processing_time)
         self.remaining_time = - np.inf
         self._next_op = next_op
