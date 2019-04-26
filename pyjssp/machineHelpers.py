@@ -56,7 +56,6 @@ class MachineManager:
             if m.current_op is None and not m.work_done():
                 m_list.append(m)
         return m_list
-
     
     # calculate the length of queues for all machines
     def cal_total_cost(self):
