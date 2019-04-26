@@ -10,6 +10,7 @@ from pyjssp.configs import (PROCESSING_NODE_SIG,
 class MachineManager:
     def __init__(self,
                  machine_matrix,
+                 job_manager,
                  delay=True,
                  verbose=False):
 
@@ -24,7 +25,7 @@ class MachineManager:
             job_ids, step_ids = np.where(machine_matrix == m_id)
             possible_ops = []
             for job_id, step_id in zip(job_ids, step_ids):
-                possible_ops.append(Operation.get_op(job_id, step_id))
+                possible_ops.append(job_manager[job_id][step_id])
             m_id += 1  # To make machine index starts from 1
             self.machines[m_id] = Machine(m_id, possible_ops, delay, verbose)
 
@@ -87,6 +88,7 @@ class NodeProcessingTimeMachineManager(MachineManager):
 
     def __init__(self,
                  machine_matrix,
+                 job_manager,
                  delay=True,
                  verbose=False):
 
@@ -101,7 +103,7 @@ class NodeProcessingTimeMachineManager(MachineManager):
             job_ids, step_ids = np.where(machine_matrix == m_id)
             possible_ops = []
             for job_id, step_id in zip(job_ids, step_ids):
-                possible_ops.append(NodeProcessingTimeOperation.get_op(job_id, step_id))
+                possible_ops.append(job_manager[job_id][step_id])
             m_id += 1  # To make machine index starts from 1
             self.machines[m_id] = Machine(m_id, possible_ops, delay, verbose)
 

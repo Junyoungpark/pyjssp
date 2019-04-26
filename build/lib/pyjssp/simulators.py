@@ -48,15 +48,18 @@ class Simulator:
         self.use_surrogate_index = use_surrogate_index
         self.delay = delay
         self.verbose = verbose
-        self.reset_simulator()
+        self.reset()
         # simulation procedure : global_time +=1 -> do_processing -> transit
 
-    def reset_simulator(self):
+    def reset(self):
         self.job_manager = JobManager(self.machine_matrix,
                                       self.processing_time_matrix,
                                       embedding_dim=self.embedding_dim,
                                       use_surrogate_index=self.use_surrogate_index)
-        self.machine_manager = MachineManager(self.machine_matrix, self.delay, self.verbose)
+        self.machine_manager = MachineManager(self.machine_matrix,
+                                              self.job_manager,
+                                              self.delay,
+                                              self.verbose)
         self.global_time = 0  # -1 matters a lot
 
     def transit(self, action=None):
@@ -289,12 +292,13 @@ class Simulator:
 
 class NodeProcessingTimeSimulator(Simulator):
 
-    def reset_simulator(self):
+    def reset(self):
         self.job_manager = NodeProcessingTimeJobManager(self.machine_matrix,
                                                         self.processing_time_matrix,
                                                         embedding_dim=self.embedding_dim,
                                                         use_surrogate_index=self.use_surrogate_index)
         self.machine_manager = NodeProcessingTimeMachineManager(self.machine_matrix,
+                                                                self.job_manager,
                                                                 self.delay,
                                                                 self.verbose)
         self.global_time = 0  # -1 matters a lot
