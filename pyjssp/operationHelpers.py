@@ -93,13 +93,13 @@ class JobManager:
         for m_id in machine_index:
             job_ids, step_ids = np.where(machine_matrix == m_id)
             for job_id1, step_id1 in zip(job_ids, step_ids):
-                op1 = Operation.get_op(job_id1, step_id1)
+                op1 = self.jobs[job_id1][step_id1]
                 ops = []
                 for job_id2, step_id2 in zip(job_ids, step_ids):
                     if (job_id1 == job_id2) and (step_id1 == step_id2):
                         continue  # skip itself
                     else:
-                        ops.append(Operation.get_op(job_id2, step_id2))
+                        ops.append(self.jobs[job_id2][step_id2])
                 op1.disjunctive_ops = ops
         
         self.use_surrogate_index = use_surrogate_index
@@ -229,13 +229,13 @@ class NodeProcessingTimeJobManager(JobManager):
         for m_id in machine_index:
             job_ids, step_ids = np.where(machine_matrix == m_id)
             for job_id1, step_id1 in zip(job_ids, step_ids):
-                op1 = NodeProcessingTimeOperation.get_op(job_id1, step_id1)
+                op1 = self.jobs[job_id1][step_id1]
                 ops = []
                 for job_id2, step_id2 in zip(job_ids, step_ids):
                     if (job_id1 == job_id2) and (step_id1 == step_id2):
                         continue  # skip itself
                     else:
-                        ops.append(NodeProcessingTimeOperation.get_op(job_id2, step_id2))
+                        ops.append(self.jobs[job_id2][step_id2])
                 op1.disjunctive_ops = ops
 
         self.use_surrogate_index = use_surrogate_index
@@ -451,8 +451,6 @@ class NodeProcessingTimeEndOperation(EndOperation):
 
 
 class Operation:
-    num_operation = 0  # total number of operations in job shop (n*m)
-    id2op = OrderedDict()
 
     def __init__(self,
                  job_id,
@@ -485,9 +483,6 @@ class Operation:
         self.next_op_built = False
         self.disjunctive_built = False
         self.built = False
-
-        Operation.num_operation += 1
-        Operation.id2op[(job_id, step_id)] = self
 
     def __str__(self):
         return "job {} step {}".format(self.job_id, self.step_id)
@@ -554,25 +549,8 @@ class Operation:
             raise RuntimeError("Not supporting node type")
         return _x
 
-    @classmethod
-    def get_op(cls, job_id, step_id):
-        if (job_id, step_id) in cls.id2op:  # If exist, then get already instantiated operation
-            op = cls.id2op[(job_id, step_id)]
-            return op
-        else:
-            RuntimeError("Access to non-existing operation is not permitted")
-
-    @classmethod
-    def init_ops(cls):
-        cls.num_operation = 0
-        cls.id2op = OrderedDict()
-        cls.op2id = OrderedDict()
-
 
 class NodeProcessingTimeOperation(Operation):
-
-    num_operation = 0  # total number of operations in job shop (n*m)
-    id2op = OrderedDict()
 
     def __init__(self,
                  job_id,
@@ -605,9 +583,6 @@ class NodeProcessingTimeOperation(Operation):
         self.disjunctive_built = False
         self.built = False
 
-        NodeProcessingTimeOperation.num_operation += 1
-        NodeProcessingTimeOperation.id2op[(job_id, step_id)] = self
-
     @property
     def x(self):  # return node attribute
         not_start_cond = (self.node_status == NOT_START_NODE_SIG)
@@ -628,17 +603,3 @@ class NodeProcessingTimeOperation(Operation):
         else:
             raise RuntimeError("Not supporting node type")
         return _x
-
-    @classmethod
-    def get_op(cls, job_id, step_id):
-        if (job_id, step_id) in cls.id2op:  # If exist, then get already instantiated operation
-            op = cls.id2op[(job_id, step_id)]
-            return op
-        else:
-            RuntimeError("Access to non-existing operation is not permitted")
-
-    @classmethod
-    def init_ops(cls):
-        cls.num_operation = 0
-        cls.id2op = OrderedDict()
-        cls.op2id = OrderedDict()
