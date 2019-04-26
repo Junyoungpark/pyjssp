@@ -6,8 +6,12 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 from pyjssp.jobShopSamplers import jssp_sampling
-from pyjssp.operationHelpers import JobManager, get_edge_color_map, get_node_color_map
-from pyjssp.machineHelpers import MachineManager
+from pyjssp.operationHelpers import (JobManager,
+                                     NodeProcessingTimeJobManager,
+                                     get_edge_color_map,
+                                     get_node_color_map)
+from pyjssp.machineHelpers import (MachineManager,
+                                   NodeProcessingTimeMachineManager)
 from pyjssp.configs import (N_SEP, SEP, NEW)
 
 
@@ -279,3 +283,15 @@ class Simulator:
                    processing_time_matrix=prts,
                    **kwargs)
 
+
+class NodeProcessingTimeSimulator(Simulator):
+
+    def reset_simulator(self):
+        self.job_manager = NodeProcessingTimeJobManager(self.machine_matrix,
+                                                        self.processing_time_matrix,
+                                                        embedding_dim=self.embedding_dim,
+                                                        use_surrogate_index=self.use_surrogate_index)
+        self.machine_manager = NodeProcessingTimeMachineManager(self.machine_matrix,
+                                                                self.delay,
+                                                                self.verbose)
+        self.global_time = 0  # -1 matters a lot

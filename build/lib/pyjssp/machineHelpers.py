@@ -1,7 +1,7 @@
 import random
 from collections import OrderedDict
 import numpy as np
-from pyjssp.operationHelpers import Operation
+from pyjssp.operationHelpers import Operation, NodeProcessingTimeOperation
 from pyjssp.configs import (PROCESSING_NODE_SIG,
                             DONE_NODE_SIG,
                             DELAYED_NODE_SIG)
@@ -72,6 +72,29 @@ class MachineManager:
         all_machines_not_available_cond = not self.get_available_machines()
         all_machines_delayed_cond = self.all_delayed()
         return all_machines_not_available_cond and all_machines_delayed_cond
+
+
+class NodeProcessingTimeMachineManager(MachineManager):
+
+    def __init__(self,
+                 machine_matrix,
+                 delay=True,
+                 verbose=False):
+
+        machine_matrix = machine_matrix.astype(int)
+
+        # Parse machine indices
+        machine_index = list(set(machine_matrix.flatten().tolist()))
+
+        # Global machines dict
+        self.machines = OrderedDict()
+        for m_id in machine_index:
+            job_ids, step_ids = np.where(machine_matrix == m_id)
+            possible_ops = []
+            for job_id, step_id in zip(job_ids, step_ids):
+                possible_ops.append(NodeProcessingTimeOperation.get_op(job_id, step_id))
+            m_id += 1  # To make machine index starts from 1
+            self.machines[m_id] = Machine(m_id, possible_ops, delay, verbose)
 
 
 class Machine:
