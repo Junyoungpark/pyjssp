@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: pyjssp
-Version: 0.3.1
+Version: 0.3.2
 Summary: A native python Job Shop Scheduling Problem (JSSP) simulator
 Home-page: https://github.com/Junyoungpark/JSSPsimulator
 Author: Junyoung Park, Jaehyeong Chun

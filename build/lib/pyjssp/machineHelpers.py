@@ -48,7 +48,15 @@ class MachineManager:
             m_list = random.sample(m_list, len(m_list))
 
         return m_list
-
+    
+    # get idle machines' list
+    def get_idle_machines(self):
+        m_list = []
+        for _, m in self.machines.items():
+            if m.current_op is None and not m.work_done():
+                m_list.append(m)
+        return m_list
+    
     # calculate the length of queues for all machines
     def cal_total_cost(self):
         c = 0
@@ -62,7 +70,8 @@ class MachineManager:
             m.cost += cost
 
     def get_machines(self):
-        return [m for _, m in self.machines.items()]
+        m_list = [m for _, m in self.machines.items()]
+        return random.sample(m_list, len(m_list))
 
     def all_delayed(self):
         return np.product([m.delayed_op is not None for _, m in self.machines.items()])
@@ -116,7 +125,7 @@ class Machine:
         return "Machine {}".format(self.machine_id)
 
     def available(self):
-        future_work_exist_cond = self.doable_ops(delay=self.delay)
+        future_work_exist_cond = bool(self.doable_ops(delay=self.delay))
         currently_not_processing_cond = self.current_op is None
         not_wait_for_delayed_cond = not self.wait_for_delayed()
         ret = future_work_exist_cond and currently_not_processing_cond and not_wait_for_delayed_cond
@@ -141,9 +150,13 @@ class Machine:
             else:
                 prev_done = op.prev_op.node_status == DONE_NODE_SIG
                 prev_process = op.prev_op.node_status == PROCESSING_NODE_SIG
-
+                first_op = not bool(self.done_ops)
                 if delay:
-                    cond = prev_done or prev_process
+                    # each machine's first processing operation should not be a reserved operation
+                    if first_op:
+                        cond = prev_done
+                    else:
+                        cond = (prev_done or prev_process)
                 else:
                     cond = prev_done
 
@@ -151,7 +164,6 @@ class Machine:
                     doable_ops.append(op)
                 else:
                     pass
-
         return doable_ops
 
     @property
@@ -171,7 +183,7 @@ class Machine:
             if prev_start:
                 doable_ops.append(op)
             else:
-                prev_done = op.prev_op.node_status == 1  # DONE NODE SIG
+                prev_done = op.prev_op.node_status == DONE_NODE_SIG 
                 if prev_done:
                     doable_ops.append(op)
         return doable_ops
@@ -220,8 +232,6 @@ class Machine:
         self.current_op = op
         self.remaining_time = op.processing_time
         self.remain_ops.remove(self.current_op)
-        # reset cost because this machine loaded a new operation.
-        self.cost = 0
 
     def unload(self, t):
         if self.verbose:
@@ -236,15 +246,19 @@ class Machine:
 
     def do_processing(self, t):
         if self.remaining_time > 0:  # When machine do some operation
-            self.current_op.remaining_time -= 1
-            self.remaining_time -= 1
+            if self.current_op is not None:
+                self.current_op.remaining_time -= 1
+                if self.current_op.remaining_time <= 0:
+                    if self.current_op.remaining_time < 0:
+                        raise RuntimeWarning("Negative remaining time observed")
+                    if self.verbose:
+                        print("[OP DONE] : / Machine  {} / Op {}/ t = {} ".format(self.machine_id, self.current_op, t))
+                    self.unload(t)
+            # to compute idle_time reward, we need to count delayed_time
+            elif self.delayed_op is not None:
+                self.delayed_op.delayed_time += 1
 
-            if self.current_op.remaining_time <= 0:
-                if self.current_op.remaining_time < 0:
-                    raise RuntimeWarning("Negative remaining time observed")
-                if self.verbose:
-                    print("[OP DONE] : / Machine  {} / Op {}/ t = {} ".format(self.machine_id, self.current_op, t))
-                self.unload(t)
+            self.remaining_time -= 1
 
     def transit(self, t, a):
         if self.available():  # Machine is ready to process.
@@ -254,6 +268,7 @@ class Machine:
                 a.node_status = DELAYED_NODE_SIG
                 self.delayed_op = a
                 self.delayed_op.remaining_time = a.processing_time + a.prev_op.remaining_time
+                self.remaining_time = a.processing_time + a.prev_op.remaining_time
                 self.current_op = None  # MACHINE is now waiting for delayed ops
                 if self.verbose:
                     print("[DELAYED OP CHOSEN] : / Machine  {} / Op {}/ t = {} ".format(self.machine_id, self.delayed_op, t))
