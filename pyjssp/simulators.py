@@ -137,6 +137,9 @@ class Simulator:
         elif reward == 'utilization':
             t_cost = self.machine_manager.cal_total_cost()
             r = -t_cost
+            
+        elif reward == 'idle_time':
+            r = -float(len(self.machine_manager.get_idle_machines()))/float(self.num_machine)
 
         g = self.job_manager.observe()
 
