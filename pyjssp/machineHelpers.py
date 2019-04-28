@@ -1,7 +1,7 @@
 import random
 from collections import OrderedDict
 import numpy as np
-from pyjssp.operationHelpers import Operation, NodeProcessingTimeOperation
+#from pyjssp.operationHelpers import Operation, NodeProcessingTimeOperation
 from pyjssp.configs import (PROCESSING_NODE_SIG,
                             DONE_NODE_SIG,
                             DELAYED_NODE_SIG)
@@ -141,7 +141,7 @@ class Machine:
             ret = ret and not delayed_op_ready_cond
         return ret
 
-    def doable_ops(self, delay=True):
+    def doable_ops(self):
         # doable_ops are subset of remain_ops.
         # some ops are doable when the prev_op is 'done' or 'processing' or 'start'
         doable_ops = []
@@ -153,7 +153,7 @@ class Machine:
                 prev_done = op.prev_op.node_status == DONE_NODE_SIG
                 prev_process = op.prev_op.node_status == PROCESSING_NODE_SIG
                 first_op = not bool(self.done_ops)
-                if delay:
+                if self.delay:
                     # each machine's first processing operation should not be a reserved operation
                     if first_op:
                         cond = prev_done
@@ -259,6 +259,7 @@ class Machine:
             # to compute idle_time reward, we need to count delayed_time
             elif self.delayed_op is not None:
                 self.delayed_op.delayed_time += 1
+                self.delayed_op.remaining_time -= 1
 
             self.remaining_time -= 1
 
