@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyjssp',
-    version='0.3.5',
+    version='0.3.6',
     description='A native python Job Shop Scheduling Problem (JSSP) simulator',
     author='Junyoung Park, Jaehyeong Chun',
     author_email='Junyoungpark@kaist.ac.kr',
