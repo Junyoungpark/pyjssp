@@ -2,6 +2,7 @@ README.md
 setup.cfg
 setup.py
 pyjssp/__init__.py
+pyjssp/benchmarks.py
 pyjssp/configs.py
 pyjssp/jobShopSamplers.py
 pyjssp/machineHelpers.py
