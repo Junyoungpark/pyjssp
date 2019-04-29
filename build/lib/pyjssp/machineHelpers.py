@@ -127,7 +127,7 @@ class Machine:
         return "Machine {}".format(self.machine_id)
 
     def available(self):
-        future_work_exist_cond = bool(self.doable_ops(delay=self.delay))
+        future_work_exist_cond = bool(self.doable_ops())
         currently_not_processing_cond = self.current_op is None
         not_wait_for_delayed_cond = not self.wait_for_delayed()
         ret = future_work_exist_cond and currently_not_processing_cond and not_wait_for_delayed_cond
@@ -171,7 +171,7 @@ class Machine:
     @property
     def doable_ops_id(self):
         doable_ops_id = []
-        doable_ops = self.doable_ops(delay=self.delay)
+        doable_ops = self.doable_ops()
         for op in doable_ops:
             doable_ops_id.append(op.id)
 
