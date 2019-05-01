@@ -90,9 +90,11 @@ class Simulator:
             action = operation
             machine.transit(self.global_time, action)
 
-    def flush_trivial_ops(self):
+    def flush_trivial_ops(self, reward='utilization', gamma=1.0):
         done = False
+        cum_reward = 0
         while True:
+            m_list = []
             do_op_dict = self.get_doable_ops_in_dict()
             all_machine_work = False if bool(do_op_dict) else True
 
@@ -100,13 +102,15 @@ class Simulator:
                 self.process_one_time()
             else:  # some of machine has possibly trivial action. the others not.
                 # load trivial ops to the machines
-                print(self.global_time, do_op_dict)
                 num_ops_counter = 1
                 for m_id, op_ids in do_op_dict.items():
                     num_ops = len(op_ids)
                     if num_ops == 1:
                         self.transit(op_ids[0])  # load trivial action
+                        _, r, _ = self.observe(reward)
+                        cum_reward = r + gamma*cum_reward
                     else:
+                        m_list.append(m_id)
                         num_ops_counter *= num_ops
 
                 # not-all trivial break the loop
@@ -119,7 +123,7 @@ class Simulator:
 
             if done:
                 break
-        return done
+        return m_list, cum_reward, done
 
     def get_available_machines(self, shuffle_machine=True):
         return self.machine_manager.get_available_machines(shuffle_machine)
@@ -155,7 +159,7 @@ class Simulator:
             ret = self.get_doable_ops_in_dict(machine_id, shuffle_machine)
         return ret
 
-    def observe(self, reward='makespan', return_doable=True):
+    def observe(self, reward='utilization', return_doable=True):
         # A simple wrapper for JobManager's observe function
         # and return current time step reward r
         # check all jobs are done or not, then return done = True or False
