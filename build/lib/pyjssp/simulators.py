@@ -62,6 +62,10 @@ class Simulator:
                                               self.verbose)
         self.global_time = 0  # -1 matters a lot
 
+    def process_one_time(self):
+        self.global_time += 1
+        self.machine_manager.do_processing(self.global_time)
+
     def transit(self, action=None):
         if action is None:
             # Perform random action
@@ -85,6 +89,37 @@ class Simulator:
             machine = self.machine_manager[machine_id]
             action = operation
             machine.transit(self.global_time, action)
+
+    def flush_trivial_ops(self):
+        done = False
+        while True:
+            do_op_dict = self.get_doable_ops_in_dict()
+            all_machine_work = False if bool(do_op_dict) else True
+
+            if all_machine_work:  # all machines are on processing. keep process!
+                self.process_one_time()
+            else:  # some of machine has possibly trivial action. the others not.
+                # load trivial ops to the machines
+                print(self.global_time, do_op_dict)
+                num_ops_counter = 1
+                for m_id, op_ids in do_op_dict.items():
+                    num_ops = len(op_ids)
+                    if num_ops == 1:
+                        self.transit(op_ids[0])  # load trivial action
+                    else:
+                        num_ops_counter *= num_ops
+
+                # not-all trivial break the loop
+                if num_ops_counter != 1:
+                    break
+
+            # if simulation is done
+            jobs_done = [job.job_done for _, job in self.job_manager.jobs.items()]
+            done = True if np.prod(jobs_done) == 1 else False
+
+            if done:
+                break
+        return done
 
     def get_available_machines(self, shuffle_machine=True):
         return self.machine_manager.get_available_machines(shuffle_machine)
@@ -184,7 +219,7 @@ class Simulator:
             return np.linspace(-half_width, half_width, num_horizontals)[x]
 
         def yidx2coord(y):
-            return np.linspace(-half_height, half_height, num_verticals)[y]
+            return np.linspace(half_height, -half_height, num_verticals)[y]
         
         pos_dict = OrderedDict()
         for n in g.nodes:
