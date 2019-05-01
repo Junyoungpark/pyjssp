@@ -62,6 +62,10 @@ class Simulator:
                                               self.verbose)
         self.global_time = 0  # -1 matters a lot
 
+    def process_one_time(self):
+        self.global_time += 1
+        self.machine_manager.do_processing(self.global_time)
+
     def transit(self, action=None):
         if action is None:
             # Perform random action
@@ -86,80 +90,36 @@ class Simulator:
             action = operation
             machine.transit(self.global_time, action)
 
-    def aggregated_transit(self, action=None):
-        """
-            Once transit happen, simulator transits until not trivial event is triggered.
-        :param action:
-        :return:
-        """
-        aggregated_r = 0
-        self.transit(action)
-        machine_op_dict = self.get_doable_ops_in_dict()
-        # After the first transit, if there's no other event would happen in current time
-        if machine_op_dict is None:  # go to the next time step
-            _, r, done = self.observe()
-            aggregated_r += r
-            self.global_time += 1
-            self.machine_manager.do_processing(self.global_time)
-        # There exist something more on this time stamp
-        else:
-            # machine_op_dict = self.get_doable_ops_in_dict()
-            # num_op_counter = 1
-            # for m_id, op_ids in machine_op_dict.items():
-            #     num_ops = len(op_ids)
-            #     num_op_counter *= num_ops
+    def flush_trivial_ops(self):
+        done = False
+        while True:
+            do_op_dict = self.get_doable_ops_in_dict()
+            all_machine_work = False if bool(do_op_dict) else True
 
-            # all_trivial = num_op_counter == 1
-            # if all_trivial:
-            #     for m_id, op_ids in machine_op_dict.items():
-            #         self.transit(op_ids[0])
-            #     self.global_time += 1
-            #     self.machine_manager.do_processing(self.global_time)  # go to the next time step
-            # else:
-            while True:
-                machine_op_dict = self.get_doable_ops_in_dict()
-                num_op_counter = 1
-                for m_id, op_ids in machine_op_dict.items():
+            if all_machine_work:  # all machines are on processing. keep process!
+                self.process_one_time()
+            else:  # some of machine has possibly trivial action. the others not.
+                # load trivial ops to the machines
+                print(self.global_time, do_op_dict)
+                num_ops_counter = 1
+                for m_id, op_ids in do_op_dict.items():
                     num_ops = len(op_ids)
                     if num_ops == 1:
-                        self.transit(op_ids[0])  # do trivial action
-                        _, r, _ = self.observe()
-                        aggregated_r += r
+                        self.transit(op_ids[0])  # load trivial action
                     else:
-                        num_op_counter *= num_ops
-                if num_op_counter == 1:
-                    self.global_time += 1
-                    self.machine_manager.do_processing(self.global_time)
-                else:
+                        num_ops_counter *= num_ops
+
+                # not-all trivial break the loop
+                if num_ops_counter != 1:
                     break
 
-        return aggregated_r
+            # if simulation is done
+            jobs_done = [job.job_done for _, job in self.job_manager.jobs.items()]
+            done = True if np.prod(jobs_done) == 1 else False
 
-        #     # if all actions are trivial
-        #
-        #
-        #
-        #
-        # while True:
-        #     num_op_counter = 1
-        #     machine_op_dict = self.get_doable_ops_in_dict()
-        #     for m_id, op_ids in machine_op_dict.items():
-        #         num_ops = len(op_ids)
-        #         if num_ops == 1:
-        #             self.transit(op_ids[0])  # do trivial action
-        #             _, r, _ = self.observe()
-        #             aggregated_r += r
-        #         else:
-        #             num_op_counter *= num_ops
-        #         print(num_op_counter)
-        #
-        #     if num_op_counter == 1:  # if all trivial
-        #         self.global_time += 1
-        #         self.machine_manager.do_processing(self.global_time)
-        #     else:
-        #         break
-        #
-        # return aggregated_r
+            if done:
+                break
+        return done
 
     def get_available_machines(self, shuffle_machine=True):
         return self.machine_manager.get_available_machines(shuffle_machine)
