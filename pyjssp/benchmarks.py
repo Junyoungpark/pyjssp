@@ -25,7 +25,6 @@ def FT06(*args, **kwargs):
                     name='FT06',
                     machine_matrix=machine_matrix,
                     processing_time_matrix=processing_time,
-                    delay=True,
                     *args, **kwargs)
 
     return sim
@@ -59,10 +58,9 @@ def FT10(*args, **kwargs):
 
     sim = Simulator(num_machines=num_machine,
                     num_jobs=num_job,
-                    name='FT16',
+                    name='FT10',
                     machine_matrix=machine_matrix,
                     processing_time_matrix=processing_time,
-                    delay=True,
                     *args, **kwargs)
 
     return sim
