@@ -272,7 +272,7 @@ class NodeProcessingTimeJobManager(JobManager):
                     self.sur_index_dict[num_ops] = op._id
                     num_ops += 1
 
-    def observe(self):
+    def observe(self, detach_done=True):
         """
         :return: Current time stamp job-shop graph
         """
@@ -283,23 +283,41 @@ class NodeProcessingTimeJobManager(JobManager):
                 not_start_cond = not (op == job.ops[0])
                 not_end_cond = not isinstance(op, EndOperation)
 
-                g.add_node(op.id, **op.x)
+                done_cond = op.x['type'] == DONE_NODE_SIG
 
-                if not_end_cond:  # Construct forward flow conjunctive edges only
-                    g.add_edge(op.id, op.next_op.id,
-                               distance=(op.next_op.complete_ratio-op.complete_ratio),
-                               type=CONJUNCTIVE_TYPE,
-                               direction=FORWARD)
+                if detach_done:
+                    if not done_cond:
+                        g.add_node(op.id, **op.x)
+                        if not_end_cond:  # Construct forward flow conjunctive edges only
+                            g.add_edge(op.id, op.next_op.id,
+                                       distance=(op.next_op.complete_ratio-op.complete_ratio),
+                                       type=CONJUNCTIVE_TYPE,
+                                       direction=FORWARD)
 
-                    for disj_op in op.disjunctive_ops:
-                        g.add_edge(op.id, disj_op.id, type=DISJUNCTIVE_TYPE)
+                            for disj_op in op.disjunctive_ops:
+                                g.add_edge(op.id, disj_op.id, type=DISJUNCTIVE_TYPE)
 
-                if not_start_cond:
-                    g.add_edge(op.id, op.prev_op.id,
-                               distance=-(op.complete_ratio - op.prev_op.complete_ratio),
-                               type=CONJUNCTIVE_TYPE,
-                               direction=BACKWARD)
+                        if not_start_cond:
+                            g.add_edge(op.id, op.prev_op.id,
+                                       distance=-(op.complete_ratio - op.prev_op.complete_ratio),
+                                       type=CONJUNCTIVE_TYPE,
+                                       direction=BACKWARD)
+                else:
+                    g.add_node(op.id, **op.x)
+                    if not_end_cond:  # Construct forward flow conjunctive edges only
+                        g.add_edge(op.id, op.next_op.id,
+                                   distance=(op.next_op.complete_ratio - op.complete_ratio),
+                                   type=CONJUNCTIVE_TYPE,
+                                   direction=FORWARD)
 
+                        for disj_op in op.disjunctive_ops:
+                            g.add_edge(op.id, disj_op.id, type=DISJUNCTIVE_TYPE)
+
+                    if not_start_cond:
+                        g.add_edge(op.id, op.prev_op.id,
+                                   distance=-(op.complete_ratio - op.prev_op.complete_ratio),
+                                   type=CONJUNCTIVE_TYPE,
+                                   direction=BACKWARD)
         return g
 
 
