@@ -159,7 +159,7 @@ class Simulator:
             ret = self.get_doable_ops_in_dict(machine_id, shuffle_machine)
         return ret
 
-    def observe(self, reward='utilization', return_doable=True):
+    def observe(self, reward='utilization', return_doable=True, detach_done=True):
         # A simple wrapper for JobManager's observe function
         # and return current time step reward r
         # check all jobs are done or not, then return done = True or False
@@ -183,7 +183,7 @@ class Simulator:
         elif reward == 'idle_time':
             r = -float(len(self.machine_manager.get_idle_machines()))/float(self.num_machine)
 
-        g = self.job_manager.observe()
+        g = self.job_manager.observe(detach_done=detach_done)
 
         if return_doable:
             if self.use_surrogate_index:
