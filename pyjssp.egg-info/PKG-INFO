@@ -1,0 +1,17 @@
+Metadata-Version: 1.1
+Name: pyjssp
+Version: 0.4.6
+Summary: A native python Job Shop Scheduling Problem (JSSP) simulator
+Home-page: https://github.com/Junyoungpark/JSSPsimulator
+Author: Junyoung Park, Jaehyeong Chun
+Author-email: Junyoungpark@kaist.ac.kr
+License: UNKNOWN
+Description: UNKNOWN
+Keywords: jssp,jssp simulator
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.2
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
