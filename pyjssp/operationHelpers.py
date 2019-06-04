@@ -129,7 +129,7 @@ class JobManager:
         for job_id, job in self.jobs.items():
             for op in job.ops:
                 not_start_cond = not (op == job.ops[0])
-                not_end_cond = not isinstance(op, EndOperation)
+                not_end_cond = not (op == job.ops[-1])
 
                 done_cond = op.x['type'] == DONE_NODE_SIG
 
@@ -154,7 +154,6 @@ class JobManager:
                                            direction=BACKWARD)
                 else:
                     g.add_node(op.id, **op.x)
-
                     if not_end_cond:  # Construct forward flow conjunctive edges only
                         g.add_edge(op.id, op.next_op.id,
                                    processing_time=op.processing_time,
@@ -326,26 +325,20 @@ class Job:
         self.job_id = job_id
         self.ops = list()
         self.processing_time = np.sum(processing_time_order)
+        self.num_sequence = processing_time_order.size
         # Connecting backward paths (add prev_op to operations)
         cum_pr_t = 0
         for step_id, (m_id, pr_t) in enumerate(zip(machine_order, processing_time_order)):
+            cum_pr_t += pr_t
             op = Operation(job_id=job_id, step_id=step_id, machine_id=m_id,
                            prev_op=None,
                            processing_time=pr_t,
                            complete_ratio=cum_pr_t/self.processing_time,
                            job=self)
-            cum_pr_t += pr_t
             self.ops.append(op)
         for i, op in enumerate(self.ops[1:]):
             op.prev_op = self.ops[i]
 
-        # instantiate DUMMY END node
-        _prev_op = self.ops[-1]
-        self.ops.append(EndOperation(job_id=job_id,
-                                     step_id=_prev_op.step_id + 1,
-                                     embedding_dim=embedding_dim))
-        self.ops[-1].prev_op = _prev_op
-        self.num_sequence = len(self.ops) - 1
 
         # Connecting forward paths (add next_op to operations)
         for i, node in enumerate(self.ops[:-1]):
@@ -357,7 +350,7 @@ class Job:
     # To check job is done or not using last operation's node status
     @property
     def job_done(self):
-        if self.ops[-2].node_status == DONE_NODE_SIG:
+        if self.ops[-1].node_status == DONE_NODE_SIG:
             return True
         else:
             return False
@@ -367,7 +360,7 @@ class Job:
     def remaining_ops(self):
         c = 0
         for op in self.ops:
-            if op.node_status == DONE_NODE_SIG and op.node_status != DUMMY_NODE_SIG:
+            if op.node_status != DONE_NODE_SIG:
                 c += 1
         return c
 
@@ -514,11 +507,10 @@ class Operation:
         self.delayed_time = 0
         self.processing_time = int(processing_time)
         self.remaining_time = - np.inf
+        self.remaining_ops = self.job.num_sequence - (self.step_id + 1)
+        self.waiting_time = 0
         self._next_op = next_op
         self._disjunctive_ops = disjunctive_ops
-
-        self.start_time = None
-        self.end_time = None
 
         self.next_op_built = False
         self.disjunctive_built = False
@@ -577,14 +569,24 @@ class Operation:
 
         if not_start_cond:
             _x = OrderedDict()
-            _x["complete_ratio"] = self.complete_ratio
+            _x['id'] = self._id
             _x["type"] = self.node_status
-            _x["remain_time"] = -1
-        elif processing_cond or done_cond or delayed_cond:
+            _x["complete_ratio"] = self.complete_ratio
+            _x['processing_time'] = self.processing_time
+            _x['remaining_ops'] = self.remaining_ops
+            _x['waiting_time'] = self.waiting_time
+            _x["remain_time"] = 0
+        elif processing_cond or done_cond:
             _x = OrderedDict()
-            _x["complete_ratio"] = self.complete_ratio
+            _x['id'] = self._id
             _x["type"] = self.node_status
+            _x["complete_ratio"] = self.complete_ratio
+            _x['processing_time'] = self.processing_time
+            _x['remaining_ops'] = self.remaining_ops
+            _x['waiting_time'] = 0
             _x["remain_time"] = self.remaining_time
+        elif delayed_cond:
+            raise NotImplementedError("delayed operation")
         else:
             raise RuntimeError("Not supporting node type")
         return _x
