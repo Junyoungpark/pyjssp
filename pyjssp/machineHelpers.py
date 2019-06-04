@@ -166,6 +166,7 @@ class Machine:
                     doable_ops.append(op)
                 else:
                     pass
+
         return doable_ops
 
     @property
@@ -260,6 +261,13 @@ class Machine:
             elif self.delayed_op is not None:
                 self.delayed_op.delayed_time += 1
                 self.delayed_op.remaining_time -= 1
+
+            doable_ops = self.doable_ops()
+            if doable_ops:
+                for op in doable_ops:
+                    op.waiting_time += 1
+            else:
+                pass
 
             self.remaining_time -= 1
 

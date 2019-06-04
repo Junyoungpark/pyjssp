@@ -19,7 +19,7 @@ class Simulator:
     def __init__(self,
                  num_machines,
                  num_jobs,
-                 detach_done=True,
+                 detach_done=False,
                  name=None,
                  machine_matrix=None,
                  processing_time_matrix=None,
