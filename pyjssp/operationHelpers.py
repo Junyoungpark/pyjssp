@@ -160,14 +160,15 @@ class JobManager:
                                    type=CONJUNCTIVE_TYPE,
                                    direction=FORWARD)
 
-                        for disj_op in op.disjunctive_ops:
-                            g.add_edge(op.id, disj_op.id, type=DISJUNCTIVE_TYPE)
-
                     if not_start_cond:
                         g.add_edge(op.id, op.prev_op.id,
                                    processing_time=-1 * op.prev_op.processing_time,
                                    type=CONJUNCTIVE_TYPE,
                                    direction=BACKWARD)
+
+                    for disj_op in op.disjunctive_ops:
+                        g.add_edge(op.id, disj_op.id, type=DISJUNCTIVE_TYPE)
+
         return g
 
     def plot_graph(self, draw=True,
