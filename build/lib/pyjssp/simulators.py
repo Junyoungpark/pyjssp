@@ -278,11 +278,9 @@ class Simulator:
             ms = []  # machines
             prts = []  # processing times
             for l in f:
-                l_split = l.split(SEP)
+                l_split = " ".join(l.split()).split(' ')
                 m = l_split[0::2]
                 prt = l_split[1::2]
-                if NEW in prt[-1]:
-                    prt[-1] = prt[-1].split(NEW)[0]
                 ms.append(np.array(m, dtype=int))
                 prts.append(np.array(prt, dtype=float))
 
